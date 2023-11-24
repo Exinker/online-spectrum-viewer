@@ -1,0 +1,7 @@
+numpy
+
+dash
+dash-bootstrap-components
+
+vmk_spectrum2
+git+https://github.com/Exinker/libspectrum2-wrapper
