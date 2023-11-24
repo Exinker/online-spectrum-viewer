@@ -5,7 +5,7 @@ from dash import Dash, html, dcc
 from dash.dependencies import Output, Input, State
 from dash.exceptions import PreventUpdate
 
-from core.config import N_FRAMES
+from core.config import N_FRAMES, STYLESHEET, GRAPH_BACKGROUND_COLOR, GRAPH_SIGNAL_COLOR
 from core.experiment import setup_experiment
 from core.signal import read_signal
 
@@ -19,6 +19,7 @@ fig = go.Figure()
 fig.add_traces([
     go.Scatter(
         x=[], y=[],
+        line={'color': GRAPH_SIGNAL_COLOR, 'width': 1},
     ),
 ])
 
@@ -31,6 +32,9 @@ fig.layout.yaxis=dict(
     title=r'I [%]',
     mirror=True,
 )
+fig.layout.template = 'simple_white'
+fig.layout.plot_bgcolor = GRAPH_BACKGROUND_COLOR
+fig.layout.paper_bgcolor = GRAPH_BACKGROUND_COLOR
 
 show_signal_graph = dcc.Graph(
     figure=fig,
@@ -58,6 +62,9 @@ read_signal_form = dbc.Form([
 app = Dash(
     __name__,
     update_title=None,
+    external_stylesheets=[
+        STYLESHEET,
+    ],
 )
 app.layout = html.Div([
     html.H1(
@@ -81,7 +88,7 @@ app.layout = html.Div([
         id='empty-div',
         style={'display': 'none'},
     ),
-])
+], style={'background-color': GRAPH_BACKGROUND_COLOR})
 
 
 # --------        callbacks        --------
