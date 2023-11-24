@@ -2,11 +2,12 @@ import plotly.graph_objects as go
 
 import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc
-from dash.dependencies import Output, Input
+from dash.dependencies import Output, Input, State
 from dash.exceptions import PreventUpdate
 
+from core.config import N_FRAMES
 from core.experiment import setup_experiment
-from core.signal import await_read_signal
+from core.signal import read_signal
 
 
 DEVICE = setup_experiment()
@@ -45,6 +46,11 @@ read_signal_form = dbc.Form([
         color='success', outline=True,
         id='read-spectrum-button',
     ),
+    dbc.Checkbox(
+        value=False,
+        label='real-time',
+        id='real-time-checkbox',
+    ),
 ], id='read-form')
 
 
@@ -67,10 +73,55 @@ app.layout = html.Div([
     dbc.Row([
         show_signal_graph,
     ]),
+    dcc.Interval(
+        interval=1000/N_FRAMES,
+        id='timer',
+    ),
+    html.Div(
+        id='empty-div',
+        style={'display': 'none'},
+    ),
 ])
 
 
 # --------        callbacks        --------
+@app.callback(
+    Output('empty-div', 'children'),
+    Input('timer', 'n_intervals'),
+)
+def read_device(n_intervals: int) -> None:
+    """Read signal from device by `timer`."""
+
+    try:
+        DEVICE.read()
+    except AssertionError as error:
+        raise PreventUpdate
+
+
+@app.callback(
+    Output('read-spectrum-button', 'disabled'),
+    Input('real-time-checkbox', 'value'),
+)
+def set_active_read_button(is_checked: bool) -> bool:
+    """Set disabled of `read-spectrum-button` by `real-time-checkbox`."""
+    return is_checked
+
+
+@app.callback(
+    Output('read-spectrum-button', 'n_clicks'),
+    Input('timer', 'n_intervals'),
+    State('read-spectrum-button', 'n_clicks'),
+    State('real-time-checkbox', 'value'),
+)
+def click_read_button(n_intervals: int, n_clicks_read_button: int | None, is_checked_runtime_checkbox: bool) -> bool:
+    """Click `read-light-signal-button` by `timer`."""
+
+    if not is_checked_runtime_checkbox:
+        raise PreventUpdate
+
+    return 0 if n_clicks_read_button is None else n_clicks_read_button
+
+
 @app.callback(
     Output('spectrum-graph', 'extendData'),
     Input('read-spectrum-button', 'n_clicks'),
@@ -82,9 +133,12 @@ def update_signal_graph(n_clicks: int | None):
 
     # read signal
     try:
-        signal = await_read_signal(device=DEVICE)
+        signal = read_signal(device=DEVICE)
 
     except AssertionError:
+        raise PreventUpdate
+    
+    if signal is None:
         raise PreventUpdate
 
     #

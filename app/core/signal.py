@@ -32,3 +32,15 @@ def await_read_signal(device: Device) -> Signal:
     value = device.await_read()
 
     return Signal(value)
+
+
+def read_signal(device: Device) -> Signal | None:
+    """Read (non-blocking) output signal from device."""
+
+    if len(device.storage.data) == 0:
+        return None
+
+    value = device.storage.data[-1]
+    value = value.reshape(1,-1)
+
+    return Signal(value)
