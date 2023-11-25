@@ -2,6 +2,7 @@ import numpy as np
 
 from libspectrum2_wrapper.alias import Array
 from libspectrum2_wrapper.device import Device
+from libspectrum2_wrapper.storage import BufferDeviceStorage
 
 
 class Signal():
@@ -34,13 +35,13 @@ def await_read_signal(device: Device) -> Signal:
     return Signal(value)
 
 
-def read_signal(device: Device) -> Signal | None:
+def read_signal(storage: BufferDeviceStorage) -> Signal | None:
     """Read (non-blocking) output signal from device."""
 
-    if len(device.storage.data) == 0:
+    if len(storage.data) == 0:
         return None
 
-    value = device.storage.data[-1]
+    value = storage.data[-1]
     value = value.reshape(1,-1)
 
     return Signal(value)

@@ -6,7 +6,7 @@ from dash.dependencies import Output, Input, State
 from dash.exceptions import PreventUpdate
 
 from core.config import N_FRAMES, STYLESHEET, GRAPH_BACKGROUND_COLOR, GRAPH_SIGNAL_COLOR
-from core.experiment import setup_experiment
+from core.experiment import setup_experiment, is_device_ready
 from core.signal import read_signal
 
 
@@ -100,7 +100,9 @@ def read_device(n_intervals: int) -> None:
     """Read signal from device by `timer`."""
 
     try:
+        assert is_device_ready(DEVICE)
         DEVICE.read()
+
     except AssertionError as error:
         raise PreventUpdate
 
@@ -140,7 +142,7 @@ def update_signal_graph(n_clicks: int | None):
 
     # read signal
     try:
-        signal = read_signal(device=DEVICE)
+        signal = read_signal(storage=DEVICE.storage)
 
     except AssertionError:
         raise PreventUpdate
