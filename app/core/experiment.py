@@ -73,7 +73,8 @@ def setup_experiment() -> Device:
             buffer_handler=BUFFER_HANDLER[config.buffer_handler],
         ),
     )
-    device.set_exposure(config.exposure)
+    device = device.connect()
+    device = device.set_exposure(config.exposure)
 
     #
     return device
