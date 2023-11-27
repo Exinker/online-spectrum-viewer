@@ -6,7 +6,7 @@ from functools import partial
 
 import numpy as np
 
-from libspectrum2_wrapper.device import Device, DeviceEthernetConfig, DeviceStatusCode
+from libspectrum2_wrapper.device import Device, DeviceEthernetConfig, DeviceStatusCode, CreateDeviceError, SetupDeviceError, StatusDeviceError
 from libspectrum2_wrapper.storage import BufferDeviceStorage
 
 
@@ -63,31 +63,26 @@ def setup_experiment() -> Device:
     # load config
     config = Config.from_json()
 
-    # setup device
-    device =  Device(
-        config=DeviceEthernetConfig(
-            ip=config.ip,
-        ),
+    # init device
+    device = Device(
         storage=BufferDeviceStorage(
             buffer_size=config.buffer_size,
             buffer_handler=BUFFER_HANDLER[config.buffer_handler],
         ),
     )
-    try:
-        device = device.connect()
-        device = device.set_exposure(config.exposure)
-    except AssertionError as error:
-        print(error)
+    device = device.create(
+        config=DeviceEthernetConfig(
+            ip=config.ip,
+        ),
+    )
+    device = device.connect()
+    device = device.set_exposure(config.exposure)
 
     #
     return device
 
 
-def is_device_ready(device: Device) -> bool:
-    """Check device connection and exposure."""
+def is_disconnected(device: Device) -> bool:
+    """Check device disconnection."""
 
-    is_connected = device.is_status(
-        codes=(DeviceStatusCode.CONNECTED, DeviceStatusCode.DONE_READING),
-    )
-
-    return (device.storage is not None) and (device.exposure is not None) and is_connected
+    return (device.status is None) or device.is_status(codes=(DeviceStatusCode.DISCONNECTED,))
